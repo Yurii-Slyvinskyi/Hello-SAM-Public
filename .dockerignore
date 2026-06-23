@@ -1,0 +1,9 @@
+.git
+.env
+__pycache__/
+*.pyc
+backend/.pytest_cache/
+backend/staticfiles/*
+!backend/staticfiles/.gitkeep
+AGENTS.md
+CLAUDE.md

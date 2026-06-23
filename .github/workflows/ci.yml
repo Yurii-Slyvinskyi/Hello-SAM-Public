@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hello-sam-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: Django Tests
+    runs-on: ubuntu-latest
+    env:
+      COMPOSE_PROJECT_NAME: hello-sam-ci
+      DJANGO_SECRET_KEY: ci-secret-key
+      DJANGO_DEBUG: "False"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      DJANGO_SECURE_SSL_REDIRECT: "False"
+      DJANGO_SESSION_COOKIE_SECURE: "False"
+      DJANGO_CSRF_COOKIE_SECURE: "False"
+      DJANGO_SECURE_HSTS_SECONDS: "0"
+      DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS: "False"
+      DJANGO_SECURE_HSTS_PRELOAD: "False"
+      VOICE_AGENT_TOKEN: ci-voice-agent-token
+      RETELL_API_KEY: ci-retell-api-key
+      POSTGRES_DB: hello_sam_ci
+      POSTGRES_USER: hello_sam_ci
+      POSTGRES_PASSWORD: hello_sam_ci
+      POSTMARK_SERVER_TOKEN: ci-postmark-token
+      POSTMARK_SENDER_EMAIL: maintenance@example.com
+      POSTMARK_MESSAGE_STREAM: outbound
+      TWILIO_ACCOUNT_SID: AC00000000000000000000000000000000
+      TWILIO_AUTH_TOKEN: ci-twilio-token
+      TWILIO_FROM_PHONE: "+15555555555"
+      TWILIO_MESSAGING_SERVICE_SID: ""
+      SENTRY_DSN: ""
+      SENTRY_ENVIRONMENT: ci
+      SENTRY_TRACES_SAMPLE_RATE: "0.0"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker images
+        run: docker compose build
+
+      - name: Run Django system checks
+        run: docker compose run --rm -e RUN_MIGRATIONS=0 backend python manage.py check
+
+      - name: Check migrations
+        run: docker compose run --rm -e RUN_MIGRATIONS=0 backend python manage.py makemigrations --check --dry-run
+
+      - name: Run pytest
+        run: docker compose run --rm -e RUN_MIGRATIONS=0 backend pytest
+
+      - name: Clean up Docker Compose
+        if: always()
+        run: docker compose down -v

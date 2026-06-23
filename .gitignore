@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.deploy.example
+
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+.idea/
+.DS_Store
+*.log
+
+AGENTS.md
+CLAUDE.md
